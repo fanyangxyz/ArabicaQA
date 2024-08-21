@@ -74,13 +74,16 @@ def main():
 
     tsv_file_path = './DPR/wiki/wikiAr.tsv'
     #inference = Inference(tsv_file_path)
+
     #question = "محمد حسني مبارك"
     question = "من هو محمد حسني مبارك"
     print(f'Question: {question}')
+
     #final_result = inference.get_docs(question)
     #with open('result.json', mode='w', encoding='utf-8') as f:
     #    json.dump(final_result, f, indent=4, ensure_ascii=False)
     #    print('Saved retrieval results.')
+
     retrieved_contents = ''
     num_docs_to_use = 3
     with open('result.json', mode='r', encoding='utf-8') as f:
@@ -93,6 +96,7 @@ def main():
 
     model_id = "CohereForAI/aya-23-8B"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
+
     quantization_config = None
     QUANTIZE_4BIT = True
     if QUANTIZE_4BIT:
@@ -103,12 +107,14 @@ def main():
             bnb_4bit_use_double_quant=True,
             bnb_4bit_compute_dtype=torch.bfloat16,
         )
+
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         quantization_config=quantization_config,
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
+
     print('Tokenizer and LLM created.')
 
     ## Format message with the command-r-plus chat template
