@@ -23,8 +23,8 @@ class LocalFaissRetriever:
         with torch.no_grad():
             question = question[0]
             question_token_tensor = [self.tensorizer.text_to_tensor(question)]
-            q_ids = torch.stack(question_token_tensor, dim=0).cuda()
-            q_seg = torch.zeros_like(q_ids).cuda()
+            q_ids = torch.stack(question_token_tensor, dim=0) #.cuda()
+            q_seg = torch.zeros_like(q_ids) #.cuda()
             q_attn_mask = self.tensorizer.get_attn_mask(q_ids)
             _, out, _ = self.question_encoder(q_ids, q_seg, q_attn_mask)
             query_tensor = torch.cat(out.cpu().split(1, dim=0), dim=0)

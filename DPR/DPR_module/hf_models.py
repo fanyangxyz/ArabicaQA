@@ -68,12 +68,13 @@ class HFBertEncoder(BertModel):
             attention_mask: T,
             representation_token_pos=0,
     ) -> Tuple[T, ...]:
+        print('============= Forwarding ===============')
         if self.config.output_hidden_states:
             sequence_output, pooled_output, hidden_states = super().forward(
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,
                 attention_mask=attention_mask,
-                #return_dict=False
+                return_dict=False
             )
         else:
             hidden_states = None
@@ -81,7 +82,7 @@ class HFBertEncoder(BertModel):
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,
                 attention_mask=attention_mask,
-                #return_dict=False
+                return_dict=False
             )
 
         if isinstance(representation_token_pos, int):
