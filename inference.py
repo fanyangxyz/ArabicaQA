@@ -69,20 +69,30 @@ class Inference:
 
 
 def main():
-    """
-    parser = ArgumentParser()
-    parser.add_argument('--question', type=str, required=True)
-    args = parser.parse_args()
-
-    question = args.question
-    """
     # pip install transformers==4.41.1
     from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
+    tsv_file_path = './DPR/wiki/wikiAr.tsv'
+    #inference = Inference(tsv_file_path)
+    #question = "محمد حسني مبارك"
+    question = "من هو محمد حسني مبارك"
+    print(f'Question: {question}')
+    #final_result = inference.get_docs(question)
+    #with open('result.json', mode='w', encoding='utf-8') as f:
+    #    json.dump(final_result, f, indent=4, ensure_ascii=False)
+    #    print('Saved retrieval results.')
+    retrieved_contents = ''
+    num_docs_to_use = 3
+    with open('result.json', mode='r', encoding='utf-8') as f:
+        final_result = json.load(f)
+        for i, (_, v) in enumerate(final_result.items()):
+            retrieved_contents += v.get('context', '') + '\n'
+            if i + 1 == num_docs_to_use:
+                break
+    print(f'len of retrieved contents: {len(retrieved_contents)}')
+
     model_id = "CohereForAI/aya-23-8B"
-    print('Creating tokenizer...')
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    print('Creating model...')
     quantization_config = None
     QUANTIZE_4BIT = True
     if QUANTIZE_4BIT:
@@ -99,15 +109,16 @@ def main():
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
+    print('Tokenizer and LLM created.')
 
-    # Format message with the command-r-plus chat template
+    ## Format message with the command-r-plus chat template
     messages = [
-        {"role": "user", "content": "Anneme onu ne kadar sevdiğimi anlatan bir mektup yaz"}]
-    print(messages)
+        {"role": "user", "content": f"{retrieved_contents}\nQuestion: {question}. Answer in English."}]
     input_ids = tokenizer.apply_chat_template(
-        messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
-    # <BOS_TOKEN><|START_OF_TURN_TOKEN|><|USER_TOKEN|>Anneme onu ne kadar sevdiğimi anlatan bir mektup yaz<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
+        messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(model.device)
+    # <BOS_TOKEN><|START_OF_TURN_TOKEN|><|USER_TOKEN|>...<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 
+    print('Generating...')
     gen_tokens = model.generate(
         input_ids,
         max_new_tokens=100,
@@ -115,18 +126,11 @@ def main():
         temperature=0.3,
     )
 
-    gen_text = tokenizer.decode(gen_tokens[0])
+    gen_text = tokenizer.decode(gen_tokens[0][len(input_ids[0]): -1])
     print(gen_text)
 
-    return
-    tsv_file_path = './DPR/wiki/wikiAr.tsv'
-
-    inference = Inference(tsv_file_path)
-    # while True:
-    question = "محمد حسني مبارك"  # input('Enter a question:')
-    final_result = inference.get_docs(question)
-    with open('result.json', mode='w', encoding='utf-8') as f:
-        json.dump(final_result, f, indent=4, ensure_ascii=False)
+    import IPython
+    IPython.embed()
 
 
 if __name__ == '__main__':
